@@ -700,6 +700,45 @@
     line-height: 1.7;
   }
 
+  /* ================= 3D SCROLL TIMELINES =================
+     JS sets --p (0 → 1) on each .tl3d item from its scroll position.
+     The item itself never moves (so the dots stay on the line); only
+     its card swings up out of the page in 3D. */
+  .tl3d{
+    --p: 0;
+    --ry: -22deg;
+    perspective: 900px;
+    perspective-origin: 50% 20%;
+  }
+  .tl3d.alt{ --ry: 22deg; }
+  .tl-card{
+    position: relative;
+    transform-origin: 50% 0%;
+    transform:
+      translate3d(0, calc((1 - var(--p)) * 70px), calc((1 - var(--p)) * -120px))
+      rotateX(calc((1 - var(--p)) * 62deg))
+      rotateY(calc((1 - var(--p)) * var(--ry)));
+    opacity: calc(var(--p) * 1.25 - 0.1);
+    will-change: transform, opacity;
+    background: rgba(255,255,255,0.74);
+    border: 1px solid rgba(185,146,96,0.24);
+    border-radius: 18px;
+    box-shadow: 0 18px 36px -22px rgba(43,35,48,0.4);
+    overflow: hidden;
+  }
+  /* soft light sweeping across the card as it settles */
+  .tl-card::after{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.75) 50%, transparent 70%);
+    transform: translateX(calc((var(--p) * 220%) - 110%));
+    opacity: calc((1 - var(--p)) * 1.6);
+    pointer-events:none;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tl3d{ --p: 1 !important; }
+  }
+
   /* ================= OUR STORY ================= */
   #story{ background: rgba(242,234,224,0.72); }
   .story-line{
@@ -711,24 +750,27 @@
   .story-line::before{
     content:'';
     position:absolute;
-    left: 6px; top: 8px; bottom: 8px;
+    left: 6px; top: 28px; bottom: 40px;
     width: 1px;
     background: linear-gradient(to bottom, var(--rose), var(--sage));
     opacity:.5;
   }
   .story-item{
     position: relative;
-    padding-bottom: 56px;
+    padding-bottom: 28px;
   }
+  .story-card{ padding: 20px 22px 22px; }
   .story-item:last-child{ padding-bottom:0; }
   .story-item::before{
     content:'';
     position:absolute;
-    left: -34px; top: 4px;
+    left: -34px; top: 24px;
     width: 11px; height:11px;
     border-radius:50%;
     background: var(--ivory-deep);
     border: 2px solid var(--rose-deep);
+    transform: scale(calc(0.4 + var(--p) * 0.6));
+    z-index: 1;
   }
   .story-item:nth-child(2)::before{ border-color: var(--sage-deep); }
   .story-item:nth-child(3)::before{ border-color: var(--thread-gold); }
@@ -898,26 +940,29 @@
   /* ================= DAY TIMELINE ================= */
   #daytimeline{ background: rgba(242,234,224,0.72); }
   .dtl{
+    --gap: 24px;
     max-width: 480px;
     margin: 0 auto;
     position:relative;
   }
+  @media (max-width: 420px){ .dtl{ --gap: 14px; } }
+  /* line runs through the dot centres: time width + gap + half the dot */
   .dtl-line{
-    position:absolute; left: 89px; top:10px; bottom:10px; width:1px;
+    position:absolute; left: calc(58px + var(--gap) + 7px); top:10px; bottom:10px; width:1px;
     background: var(--line);
   }
   .dtl-fill{
-    position:absolute; left:89px; top:10px; width:1px;
+    position:absolute; left: calc(58px + var(--gap) + 7px); top:10px; width:1px;
     background: linear-gradient(to bottom, var(--rose-deep), var(--sage-deep));
     height: calc(100% - 20px);
     transform: scaleY(0);
     transform-origin: top;
-    transition: transform .5s var(--ease);
+    transition: transform .15s linear;
   }
   .dtl-item{
     display:flex;
-    gap: 24px;
-    padding-bottom: 44px;
+    gap: var(--gap);
+    padding-bottom: 26px;
     position:relative;
   }
   .dtl-item:last-child{ padding-bottom:0; }
@@ -929,6 +974,8 @@
     color: var(--rose-deep);
     padding-top: 2px;
     text-align:right;
+    transform: translateX(calc((1 - var(--p)) * -26px));
+    opacity: var(--p);
   }
   .dtl-dot{
     width: 15px; height:15px; border-radius:50%;
@@ -937,9 +984,34 @@
     margin-top: 3px;
     flex-shrink:0;
     z-index:1;
+    position: relative;
+    transform: scale(calc(0.4 + var(--p) * 0.6));
+    transition: background .4s var(--ease), box-shadow .4s var(--ease);
+  }
+  .dtl-item.reached .dtl-dot{
+    background: var(--rose-deep);
+    box-shadow: 0 0 0 5px rgba(166,106,124,0.16);
+  }
+  .dtl-dot::after{
+    content:'';
+    position:absolute; inset:-2px;
+    border-radius:50%;
+    border: 1px solid var(--rose-deep);
+    opacity: 0;
+  }
+  .dtl-item.reached .dtl-dot::after{ animation: dotPing 1.1s var(--ease) 1; }
+  @keyframes dotPing{
+    0%{ opacity:.7; transform: scale(1); }
+    100%{ opacity:0; transform: scale(2.8); }
+  }
+  .dtl-body{
+    flex: 1;
+    min-width: 0;
+    margin-top: -11px;
+    padding: 12px 16px 14px;
   }
   .dtl-body h4{ font-family: var(--font-display); font-size:19px; font-weight:500; margin:0; line-height:1.3; }
-  .dtl-body p{ color: var(--ink-soft); font-size: 14px; margin-top:4px; }
+  .dtl-body p{ color: var(--ink-soft); font-size: 14px; margin-top:4px; line-height:1.55; }
 
   /* ================= GALLERY ================= */
   .gallery-grid{
@@ -1228,20 +1300,26 @@
       <p class="section-sub">Every love story is beautiful, but this one is ours.</p>
     </div>
     <div class="story-line">
-      <div class="story-item reveal" data-reveal>
-        <div class="story-kicker">Chapter One</div>
-        <h3 class="story-title">A Beginning</h3>
-        <p class="story-text">A quiet beginning that slowly became something special.</p>
+      <div class="story-item tl3d">
+        <div class="story-card tl-card">
+          <div class="story-kicker">Chapter One</div>
+          <h3 class="story-title">A Beginning</h3>
+          <p class="story-text">A quiet beginning that slowly became something special.</p>
+        </div>
       </div>
-      <div class="story-item reveal" data-reveal>
-        <div class="story-kicker">Chapter Two</div>
-        <h3 class="story-title">Falling in Love</h3>
-        <p class="story-text">Laughter, memories, and countless moments brought them closer.</p>
+      <div class="story-item tl3d alt">
+        <div class="story-card tl-card">
+          <div class="story-kicker">Chapter Two</div>
+          <h3 class="story-title">Falling in Love</h3>
+          <p class="story-text">Laughter, memories, and countless moments brought them closer.</p>
+        </div>
       </div>
-      <div class="story-item reveal" data-reveal>
-        <div class="story-kicker">Chapter Three</div>
-        <h3 class="story-title">Choosing Forever</h3>
-        <p class="story-text">Now, surrounded by loved ones, they begin forever — together.</p>
+      <div class="story-item tl3d">
+        <div class="story-card tl-card">
+          <div class="story-kicker">Chapter Three</div>
+          <h3 class="story-title">Choosing Forever</h3>
+          <p class="story-text">Now, surrounded by loved ones, they begin forever — together.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1349,28 +1427,28 @@
       <div class="eyebrow">The Day Ahead</div>
       <h2 class="section-title">Order of the Day</h2>
     </div>
-    <div class="dtl reveal" data-reveal id="dtlContainer">
+    <div class="dtl" id="dtlContainer">
       <div class="dtl-line"></div>
       <div class="dtl-fill" id="dtlFill"></div>
-      <div class="dtl-item">
+      <div class="dtl-item tl3d">
         <div class="dtl-time">12:30</div>
         <div class="dtl-dot"></div>
-        <div class="dtl-body"><h4>Guests Arrive</h4><p>Warm welcomes, seating &amp; light refreshments.</p></div>
+        <div class="dtl-body tl-card"><h4>Guests Arrive</h4><p>Warm welcomes, seating &amp; light refreshments.</p></div>
       </div>
-      <div class="dtl-item">
+      <div class="dtl-item tl3d alt">
         <div class="dtl-time">1:00</div>
         <div class="dtl-dot"></div>
-        <div class="dtl-body"><h4>The Celebration Begins</h4><p>The ceremony that brings Aqeel &amp; Hana together.</p></div>
+        <div class="dtl-body tl-card"><h4>The Celebration Begins</h4><p>The ceremony that brings Aqeel &amp; Hana together.</p></div>
       </div>
-      <div class="dtl-item">
+      <div class="dtl-item tl3d">
         <div class="dtl-time">2:30</div>
         <div class="dtl-dot"></div>
-        <div class="dtl-body"><h4>Lunch &amp; Celebration</h4><p>A shared meal, music, and joyful company.</p></div>
+        <div class="dtl-body tl-card"><h4>Lunch &amp; Celebration</h4><p>A shared meal, music, and joyful company.</p></div>
       </div>
-      <div class="dtl-item">
+      <div class="dtl-item tl3d alt">
         <div class="dtl-time">4:00</div>
         <div class="dtl-dot"></div>
-        <div class="dtl-body"><h4>Farewell &amp; Blessings</h4><p>Final photos, well-wishes, and heartfelt goodbyes.</p></div>
+        <div class="dtl-body tl-card"><h4>Farewell &amp; Blessings</h4><p>Final photos, well-wishes, and heartfelt goodbyes.</p></div>
       </div>
     </div>
   </div>
@@ -1568,24 +1646,41 @@
     revealEls.forEach(el=>el.classList.add('in'));
   }
 
-  /* ---------------- Day timeline fill on scroll ---------------- */
+  /* ---------------- 3D scroll timelines + day timeline fill ---------------- */
   const dtlContainer = document.getElementById('dtlContainer');
   const dtlFill = document.getElementById('dtlFill');
-  let dtlTicking = false;
-  function updateDtlFill(){
-    dtlTicking = false;
-    const rect = dtlContainer.getBoundingClientRect();
+  const dtlItems = [...dtlContainer.querySelectorAll('.dtl-item')];
+  const tlItems = [...document.querySelectorAll('.tl3d')];
+  const clamp01 = v => Math.max(0, Math.min(1, v));
+  let ticking = false;
+  function updateScrollFx(){
+    ticking = false;
     const vh = window.innerHeight;
-    let progress = (vh*0.75 - rect.top) / rect.height;
-    progress = Math.max(0, Math.min(1, progress));
+
+    // each card swings up as it travels from the bottom edge to ~60% of the screen
+    if(!reduceMotion){
+      tlItems.forEach(el=>{
+        const top = el.getBoundingClientRect().top;   // the item itself is never transformed
+        const t = clamp01((vh * 0.98 - top) / (vh * 0.38));
+        const p = 1 - Math.pow(1 - t, 3);              // ease-out
+        el.style.setProperty('--p', p.toFixed(3));
+      });
+    }
+
+    const rect = dtlContainer.getBoundingClientRect();
+    const progress = clamp01((vh*0.7 - rect.top) / rect.height);
     dtlFill.style.transform = 'scaleY(' + progress.toFixed(4) + ')';
+    const fillPx = progress * (rect.height - 20);
+    dtlItems.forEach(item=>{
+      item.classList.toggle('reached', item.offsetTop <= fillPx + 2);
+    });
   }
   function onScroll(){
-    if(!dtlTicking){ dtlTicking = true; requestAnimationFrame(updateDtlFill); }
+    if(!ticking){ ticking = true; requestAnimationFrame(updateScrollFx); }
   }
   window.addEventListener('scroll', onScroll, { passive:true });
   window.addEventListener('resize', onScroll, { passive:true });
-  updateDtlFill();
+  updateScrollFx();
 
   /* ---------------- Countdown ---------------- */
   const target = new Date(CONFIG.weddingDateISO).getTime();
