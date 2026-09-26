@@ -1055,14 +1055,14 @@
   ::selection{ background: var(--rose); color:#fff; }
 
   /* ---------------- Background video ----------------
-     bg.jpg shows instantly; the video fades in over it once it is
+     bg-poster.jpg (the video's first frame) shows instantly; the video fades in over it once it is
      actually playing (and never loads on Save-Data / reduced motion). */
   .site-bg{
     position: fixed;
     inset: 0;
     z-index: -1;
     overflow: hidden;
-    background: var(--ivory) url('bg.jpg') center center / cover no-repeat;
+    background: #E6EEDC url('bg-poster.jpg') center center / cover no-repeat;
   }
   .site-bg video{
     position:absolute;
@@ -1077,7 +1077,9 @@
     content:'';
     position:absolute;
     inset:0;
-    background: rgba(250,245,238,0.82);
+    /* lighter tint so the butterflies & florals show; slightly denser
+       through the middle where the text sits */
+    background: radial-gradient(120% 70% at 50% 50%, rgba(250,245,238,0.62), rgba(250,245,238,0.38));
   }
 </style>
 </head>
